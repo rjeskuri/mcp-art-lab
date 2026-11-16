@@ -521,7 +521,9 @@ def test_bad_render_arguments_exit_2_without_launching_blender(tmp_path):
     marker = tmp_path / "blender-was-launched"
     stub = tmp_path / "bin" / "blender"
     stub.parent.mkdir()
-    stub.write_text(f"#!/bin/sh\ntouch '{marker}'\nexit 0\n")
+    # A shell builtin, not touch: no_blender_env empties PATH, and the stub
+    # inherits it.
+    stub.write_text(f"#!/bin/sh\n: > '{marker}'\nexit 0\n")
     stub.chmod(0o755)
     env = dict(no_blender_env(tmp_path), ARTLAB_BLENDER=str(stub))
     styles_flag = ["--styles-dir", str(styles)]
