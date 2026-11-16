@@ -1,0 +1,32 @@
+[project]
+name = "artlab"
+version = "0.1.0"
+description = "Style lab: build and render a shared Blender test scene in several art styles."
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+artlab = "artlab.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.9"]
+
+[build-system]
+requires = ["uv_build>=0.12.19,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+target-version = "py312"
+src = ["src", "tests"]
+extend-exclude = ["scripts/deploy_guard.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "PLW"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["artlab"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = ["blender: launches the real Blender (skipped when none is found)"]
