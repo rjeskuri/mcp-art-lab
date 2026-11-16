@@ -10,6 +10,12 @@ build/
 dist/
 *.egg-info/
 
+# Style lab output and downloaded assets
+renders/
+assets/
+*.blend
+*.blend1
+
 # Node
 node_modules/
 coverage/
