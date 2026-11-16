@@ -13,12 +13,13 @@ import bpy
 # Layout in metres, for the train, people and cameras (#12) to build against.
 TRACK_X = 18.0  # the viaduct and the track run from -TRACK_X to TRACK_X
 TRACK_Y = 1.7  # track centerline
-GAUGE = 1.067
+GAUGE = 1.067  # rail spacing, Japanese narrow gauge
+RAIL_PROFILE = ((0.065, 0.0, 0.02), (0.009, 0.02, 0.12), (0.034, 0.12, 0.17))
 PLATFORM_X = 10.0  # the deck runs from -PLATFORM_X to PLATFORM_X
 PLATFORM_BACK_Y = -5.0  # open back edge; the track-side edge is at y = 0
 VIADUCT_TOP = 4.0
 BED_TOP = 4.25
-RAIL_TOP = 4.42
+RAIL_TOP = BED_TOP + RAIL_PROFILE[-1][2]
 DECK_TOP = 5.5
 ROOF_Z = 8.6  # underside of the canopy slab
 POST_XS = (-6.0, -2.0, 2.0, 6.0)
@@ -27,6 +28,7 @@ LAMP_XS = (-4.0, 0.0, 4.0)
 LAMP_Y = -1.9
 BEAM_Z = ROOF_Z - 0.25  # underside of the canopy beams, top of the posts
 
+MOON_COLOR = (0.62, 0.72, 1.0)
 LAMP_COLOR = (0.92, 0.96, 1.0)
 VENDING_COLOR = (0.85, 0.93, 1.0)
 
@@ -47,16 +49,8 @@ def boxes(name, *parts):
     for lo, hi, *slot in parts:
         (x0, y0, z0), (x1, y1, z1) = lo, hi
         first = len(verts)
-        verts += [
-            (x0, y0, z0),
-            (x1, y0, z0),
-            (x1, y1, z0),
-            (x0, y1, z0),
-            (x0, y0, z1),
-            (x1, y0, z1),
-            (x1, y1, z1),
-            (x0, y1, z1),
-        ]
+        corners = ((x0, y0), (x1, y0), (x1, y1), (x0, y1))
+        verts += [(x, y, z) for z in (z0, z1) for x, y in corners]
         faces += [[first + i for i in face] for face in BOX_FACES]
         slots += [slot[0] if slot else 0] * len(BOX_FACES)
     mesh = bpy.data.meshes.new(name)
@@ -78,52 +72,25 @@ def build(scene, add):
             ((-PLATFORM_X, 0, DECK_TOP - 0.2), (PLATFORM_X, 0.12, DECK_TOP)),  # coping
         ),
     )
-    strip = PLATFORM_X - 0.3
-    add(
-        "Platform.Tactile",
-        boxes(
-            "Platform.Tactile",
-            ((-strip, -1.1, DECK_TOP), (strip, -0.8, DECK_TOP + 0.01)),
-        ),
+    strip = (
+        (0.3 - PLATFORM_X, -1.1, DECK_TOP),
+        (PLATFORM_X - 0.3, -0.8, DECK_TOP + 0.01),
     )
-    add(
-        "Track.Bed",
-        boxes(
-            "Track.Bed",
-            (
-                (-TRACK_X, TRACK_Y - 1.25, VIADUCT_TOP),
-                (TRACK_X, TRACK_Y + 1.25, BED_TOP),
-            ),
-        ),
-    )
+    add("Platform.Tactile", boxes("Platform.Tactile", strip))
+    bed = ((-TRACK_X, TRACK_Y - 1.25, VIADUCT_TOP), (TRACK_X, TRACK_Y + 1.25, BED_TOP))
+    add("Track.Bed", boxes("Track.Bed", bed))
     add("Track.Rails", rails())
-    add(
-        "Canopy.Posts",
-        boxes(
-            "Canopy.Posts",
-            *(
-                (
-                    (x - 0.125, POST_Y - 0.125, DECK_TOP),
-                    (x + 0.125, POST_Y + 0.125, BEAM_Z),
-                )
-                for x in POST_XS
-            ),
-        ),
-    )
+    posts = [
+        ((x - 0.125, POST_Y - 0.125, DECK_TOP), (x + 0.125, POST_Y + 0.125, BEAM_Z))
+        for x in POST_XS
+    ]
+    add("Canopy.Posts", boxes("Canopy.Posts", *posts))
     add("Canopy.Roof", roof())
-    add(
-        "Platform.Lamps",
-        boxes(
-            "Platform.Lamps",
-            *(
-                (
-                    (x - 0.6, LAMP_Y - 0.08, ROOF_Z - 0.1),
-                    (x + 0.6, LAMP_Y + 0.08, ROOF_Z),
-                )
-                for x in LAMP_XS
-            ),
-        ),
-    )
+    lamps = [
+        ((x - 0.6, LAMP_Y - 0.08, ROOF_Z - 0.1), (x + 0.6, LAMP_Y + 0.08, ROOF_Z))
+        for x in LAMP_XS
+    ]
+    add("Platform.Lamps", boxes("Platform.Lamps", *lamps))
     add("Sign", sign(), "steel")
     add("Bench", bench(), "steel")
     body, front = vending_machine()
@@ -146,21 +113,12 @@ def viaduct():
 
 
 def rails():
-    """Two rails, each a foot, web and head, sitting on the track bed."""
-    parts = []
-    for side in (-1, 1):
-        y = TRACK_Y + side * GAUGE / 2
-        for half_width, z0, z1 in (
-            (0.065, 0, 0.02),
-            (0.009, 0.02, 0.12),
-            (0.034, 0.12, 0.17),
-        ):
-            parts.append(
-                (
-                    (-TRACK_X, y - half_width, BED_TOP + z0),
-                    (TRACK_X, y + half_width, BED_TOP + z1),
-                )
-            )
+    """Two rails on the track bed, each a foot, web and head (`RAIL_PROFILE`)."""
+    parts = [
+        ((-TRACK_X, y - half, BED_TOP + z0), (TRACK_X, y + half, BED_TOP + z1))
+        for y in (TRACK_Y - GAUGE / 2, TRACK_Y + GAUGE / 2)
+        for half, z0, z1 in RAIL_PROFILE
+    ]
     return boxes("Track.Rails", *parts)
 
 
@@ -233,38 +191,16 @@ def vending_machine():
 
 def add_lights(scene):
     """A dim moon, an area light under each lamp fitting, and the vending glow."""
-    light(
-        scene,
-        "Moon",
-        "moon",
-        "SUN",
-        0.4,
-        (0.62, 0.72, 1.0),
-        (0, 0, 20),
-        (math.radians(55), 0, math.radians(-35)),
-    )
+    tilt = (math.radians(55), 0, math.radians(-35))
+    light(scene, "Moon", "moon", "SUN", 0.4, MOON_COLOR, (0, 0, 20), tilt)
     for n, x in enumerate(LAMP_XS, start=1):
-        lamp = light(
-            scene,
-            f"Light.Lamp.{n}",
-            "lamp",
-            "AREA",
-            120,
-            LAMP_COLOR,
-            (x, LAMP_Y, ROOF_Z - 0.12),
-        )
+        at = (x, LAMP_Y, ROOF_Z - 0.12)
+        lamp = light(scene, f"Light.Lamp.{n}", "lamp", "AREA", 120, LAMP_COLOR, at)
         lamp.shape = "RECTANGLE"
         lamp.size, lamp.size_y = 1.2, 0.16
-    glow = light(
-        scene,
-        "Light.Vending",
-        "vending",
-        "AREA",
-        30,
-        VENDING_COLOR,
-        (7.45, -4.35, 6.75),
-        (0, math.radians(-90), 0),  # an area light shines down -Z; this turns it to +X
-    )
+    # An area light shines down its -Z; turned -90 degrees about Y it shines +X.
+    at, turn = (7.45, -4.35, 6.75), (0, math.radians(-90), 0)
+    glow = light(scene, "Light.Vending", "vending", "AREA", 30, VENDING_COLOR, at, turn)
     glow.size = 0.9
 
 
