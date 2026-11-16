@@ -1,16 +1,17 @@
 """The shared test scene: role palette, base materials, night world, render settings.
 
-`build_test_scene` fills an empty scene. Each builder module (`station` here)
-makes its meshes and hands them to `add_content`, which links them as content
-objects tagged `artlab_content` and `artlab_role` (looked up in `CONTENT`) with
-the `base.<role>` materials. Styles find the content with `content_objects`.
+`build_test_scene` fills an empty scene. Each builder module (`station`, `train`,
+`people`) makes its meshes and hands them to `add_content`, which links them as
+content objects tagged `artlab_content` and `artlab_role` (looked up in
+`CONTENT`) with the `base.<role>` materials, then `cameras` adds the two views.
+Styles find the content with `content_objects`.
 """
 
 import functools
 
 import bpy
 
-from . import station
+from . import cameras, people, station, train
 
 # Default base color (linear RGBA) for every role in the scene.
 ROLES = {
@@ -35,7 +36,7 @@ ROLES = {
 EMISSIVE_ROLES = ("lamp", "vending_glow", "train_window", "train_light")
 EMISSION_STRENGTH = 5.0
 
-# Content objects as (name, role), in build order. #12 appends the train and people.
+# Content objects as (name, role), in build order: the station, the train, the people.
 CONTENT = (
     ("Ground", "ground"),
     ("Viaduct", "concrete"),
@@ -50,6 +51,16 @@ CONTENT = (
     ("Bench", "bench"),
     ("Vending.Body", "vending"),
     ("Vending.Front", "vending_glow"),
+    ("Train.Body", "train_body"),
+    ("Train.Nose", "train_body"),
+    ("Train.Windows", "train_window"),
+    ("Train.Headlights", "train_light"),
+    ("Person.1.Head", "person_skin"),
+    ("Person.1.Body", "person_cloth"),
+    ("Person.2.Head", "person_skin"),
+    ("Person.2.Body", "person_cloth"),
+    ("Person.3.Head", "person_skin"),
+    ("Person.3.Body", "person_cloth"),
 )
 # Content the iso camera cuts away to show the inside.
 CUTAWAY = ("Canopy.Roof", "Platform.Lamps")
@@ -58,11 +69,19 @@ NIGHT_SKY = (0.008, 0.012, 0.03, 1.0)
 
 
 def build_test_scene(scene):
-    """Build the station at night into `scene`, which starts empty."""
+    """Build the station at night into `scene`, which starts empty.
+
+    Both cameras are added and `Cam.Iso` is active, with nothing hidden: the
+    cutaway is applied per camera by `cameras.use_camera`.
+    """
     for role in ROLES:
         base_material(role)
     add = functools.partial(add_content, scene)
     station.build(scene, add)
+    train.build(scene, add)
+    people.build(add)
+    scene.camera = cameras.add_iso_camera(scene)
+    cameras.add_hero_camera(scene)
     night_world(scene)
     render_settings(scene)
 
