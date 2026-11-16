@@ -12,6 +12,7 @@ A lab for exploring 3D, 2.5D and pixel-sprite art styles in Blender, driven by C
 ## Commands
 - Verify, the whole suite plus lint (CI runs the same): `scripts/verify.sh`
 - The style lab CLI: `uv run artlab` (`uv run artlab --help` lists its commands)
+- Contact sheet: `uv run artlab sheet [STYLE ...] [--camera iso|hero|all]` writes `renders/contact-sheet.png` (styles as columns, iso then hero rows) and prints its path
 
 ## Where things live
 - `scripts/verify.sh`: the checks behind the verify command; `.github/workflows/ci.yml` runs it.
