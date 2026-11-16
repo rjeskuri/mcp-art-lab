@@ -17,6 +17,7 @@ A lab for exploring 3D, 2.5D and pixel-sprite art styles in Blender, driven by C
 - `scripts/verify.sh`: the checks behind the verify command; `.github/workflows/ci.yml` runs it.
 - `.githooks/`: `pre-commit` (format and lint on staged files, no commits on main) and `pre-push` (no pushes to main, no force pushes).
 - `src/artlab/`: the `artlab` package; `cli.py` is the command line, `blender.py` finds Blender (`ARTLAB_BLENDER`, else PATH) and runs scripts in it headless.
+- `src/artlab/inblender/`: code that runs inside Blender only (`testscene.py` builds the shared test scene, `station.py` its station). It imports only the stdlib, `bpy`, `mathutils`, `bpy_extras` and itself; host modules and tests never import it in the pytest process, only probe scripts under `tests/blender_scripts/` launched through `run_blender`.
 
 ## Gotchas
 - Blender MCP (`.mcp.json`, `mcp-for-blender==2.0.0`, telemetry off, `BLENDER_MCP_SAFE_MODE=1`) needs Blender open with the add-on's server started: 3D viewport, N sidebar, MCP for Blender tab, Start MCP Server (port 9876).
