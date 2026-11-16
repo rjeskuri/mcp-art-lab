@@ -3,7 +3,9 @@ name = "artlab"
 version = "0.1.0"
 description = "Style lab: build and render a shared Blender test scene in several art styles."
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "pillow>=11",
+]
 
 [project.scripts]
 artlab = "artlab.cli:main"
