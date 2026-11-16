@@ -7,7 +7,7 @@ hooks, not here. When Claude makes the same mistake twice, add one line here.
 
 # mcp-art-lab
 
-<One sentence: what this project does, who uses its output, and what "correct" means for it.>
+A lab for exploring 3D, 2.5D and pixel-sprite art styles in Blender, driven by Claude through the Blender MCP; output is renders for the owner to judge by eye, and "correct" means a style script rebuilds the same scene every run.
 
 ## Commands
 - Verify, the whole suite plus lint (CI runs the same): `scripts/verify.sh`
@@ -18,4 +18,6 @@ hooks, not here. When Claude makes the same mistake twice, add one line here.
 - `<path>`: <what lives there>
 
 ## Gotchas
-- <A place where the code is misleading, a variable the tests need, a decision that is not in the repo.>
+- Blender MCP (`.mcp.json`, `mcp-for-blender==2.0.0`, telemetry off, `BLENDER_MCP_SAFE_MODE=1`) needs Blender open with the add-on's server started: 3D viewport, N sidebar, MCP for Blender tab, Start MCP Server (port 9876).
+- Poly Haven access is a per-scene flag (`scene.blendermcp_use_polyhaven`), not a preference: tick it in the sidebar, or have a style script set it.
+- The add-on lives outside the repo at `~/Library/Application Support/Blender/5.3/scripts/addons/blender_mcp.py`; reinstall it with `BLENDERMCP_ADDONS_DIR=<that dir> uvx mcp-for-blender==2.0.0 install-addon` when bumping the pinned version.
